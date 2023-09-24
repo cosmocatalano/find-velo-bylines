@@ -10,17 +10,23 @@ function slugify(input) {
 }
 
 //get data
-let yoastObj = JSON.parse($('.yoast-schema-graph').innerHTML);
-let articleObj = yoastObj["@graph"].filter(child => child["@type"] === "Article");
-let rawDate = articleObj[0].datePublished;
-let authorName = articleObj[0].author.name;
+function getYoastData(yoastClassObj) {
+    let yoastObj = JSON.parse(yoastClassObj.innerHTML);
+    let articleObj = yoastObj["@graph"].filter(child => child["@type"] === "Article");
+    let yoastData = [];
+    yoastData.rawDate = articleObj[0].datePublished;
+    yoastData.authorName = articleObj[0].author.name;
+    return yoastData
+}
+
+let yoastData = getYoastData($('.yoast-schema-graph'));
 
 //parse date format
 const veloDate = { year: 'numeric', month: 'long', day: 'numeric' }
-let formatedDate = new Date(Date.parse(rawDate)).toLocaleDateString('en-us', veloDate);
+formatedDate = new Date(Date.parse(yoastData.rawDate)).toLocaleDateString('en-us', veloDate);
 
 //slugify author name
-authorSlug = slugify(authorName);
+authorSlug = slugify(yoastData.authorName);
 
 //create elements
 let containerDiv = document.createElement('div');
@@ -37,11 +43,11 @@ let authorUrl = "https://velo.outsideonline.com/byline/" + authorSlug;
 authorLink.setAttribute("rel", "author");
 authorLink.setAttribute("href",  authorUrl );
 
-//wrap it in a strong -- bet this was Lance feature request…
+//wrap it in a <strong> -- bet this was Lance feature request…
 dateStrong = document.createElement('strong');
 authorStrong = document.createElement('strong');
 dateStrong.innerHTML = formatedDate;
-authorStrong.innerHTML = authorName;
+authorStrong.innerHTML = yoastData.authorName;
 
 //assemble
 timeStamp.prepend(dateStrong);
