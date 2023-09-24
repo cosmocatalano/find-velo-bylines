@@ -11,12 +11,65 @@ function slugify(input) {
 
 //get data
 function getYoastData(yoastClassObj) {
-    let yoastObj = JSON.parse(yoastClassObj.innerHTML);
-    let articleObj = yoastObj["@graph"].filter(child => child["@type"] === "Article");
     let yoastData = [];
-    yoastData.rawDate = articleObj[0].datePublished;
-    yoastData.authorName = articleObj[0].author.name;
-    return yoastData
+    let fallbackObj = [];
+    yoastData.warn = [];
+    //check for yoastData
+    if (!yoastClassObj) {
+        yoastData.fatal = "Yoast Schema Graph not found";
+    } else {
+        //parse contents into object
+        let yoastObj = JSON.parse(yoastClassObj.innerHTML);
+
+        //looking for article values
+        let articleObj = yoastObj["@graph"].filter(child => child["@type"] === "Article");
+
+        //if no article
+        if (!articleObj.length) {
+            yoastData.warn.push("URL has not been categorized as an article");
+
+            //looking for any published date
+            fallbackObj = yoastObj["@graph"].filter(child => child.hasOwnProperty("datePublished"));
+
+            // if no datePublished
+            if (!fallbackObj.length) {
+                yoastData.rawDate = "";
+                yoastData.warn.push("No published date detected");
+            } else {
+                yoastData.rawDate = fallbackObj[0].datePublished;
+            }
+
+            //looking for any modified date
+            fallbackObj = yoastObj["@graph"].filter(child => child.hasOwnProperty("dateModified"));
+            
+           // if no dateModified
+            if (!fallbackObj.length) {
+                yoastData.modDate = "";
+                yoastData.warn.push("No modified date detected");
+            } else {
+                yoastData.modDate = fallbackObj[0].dateModified;
+            }
+
+            //looking for any author string
+            fallbackObj = yoastObj["@graph"].filter(child => child.hasOwnProperty("author"));
+
+            if (!fallbackObj.length) {
+                yoastData.authorName = "";
+                yoastData.warn.push("No author name detected");
+            } else {
+                //assumes name is child of author 
+                yoastData.authorName =  fallbackObj[0].author.name;
+            }
+        //if Article detected and everyhing worked normally
+        } else {
+            yoastData.rawDate = articleObj[0].datePublished;
+            yoastData.modDate = articleObj[0].dateModified;
+            yoastData.authorName = articleObj[0].author.name;
+        }
+    }
+
+    return yoastData;
+
 }
 
 let yoastData = getYoastData($('.yoast-schema-graph'));
@@ -56,4 +109,6 @@ containerDiv.prepend(authorLink);
 containerDiv.prepend(timeStamp);
 
 //insert
+//look for the normal meta div by class
 $('.c-article-meta').prepend(containerDiv);
+
