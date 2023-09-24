@@ -9,7 +9,7 @@ function slugify(input) {
     return slug;
 }
 
-//get data
+//this gets data from Yoast
 function getYoastData(yoastClassObj) {
     let yoastData = [];
     let fallbackObj = [];
@@ -72,69 +72,93 @@ function getYoastData(yoastClassObj) {
     return yoastData;
 }
 
+let surfaceDateAndByline = true;
+//we trust the existance of *either* any stamp or byline as a correctly attributed/dated article (for now)
+if ($('header time') || $('header [rel="author"]')) {
+    surfaceDateAndByline = false;
+    
+} 
+
 //error flag
 let errorReporting = true;
 
-let yoastData = getYoastData($('.yoast-schema-graph'));
+if (surfaceDateAndByline) {
+    let yoastData = getYoastData($('.yoast-schema-graph'));
 
-//parse date format
-const veloDate = { year: 'numeric', month: 'long', day: 'numeric' }
-formatedDate = new Date(Date.parse(yoastData.found.pubDate)).toLocaleDateString('en-us', veloDate);
+    //parse date format
+    //preferred display settings
+    const veloDate = { year: 'numeric', month: 'long', day: 'numeric' }
+    
+    //suffix for modified date
+    let isModDate = '';
 
-//slugify author name
-authorSlug = slugify(yoastData.found.authorName);
-//mapping bad slugs to good if known
-const veloNames = {ahood: "andrew-hood"}
-if (veloNames[authorSlug]) {
-    authorSlug = veloNames[authorSlug];
-}
+    //test for pubDate
+    let tryDate = yoastData.found.pubDate
 
-
-//create elements
-let containerDiv = document.createElement('div');
-let timeStamp =  document.createElement('time');
-let authorLink =  document.createElement('a');
-
-//add classes 
-containerDiv.classList.add("o-post-meta", "u-spacing--quarter");
-timeStamp.classList.add("o-timestamp", "u-text-transform--upper", "u-color--gray--dark", "u-display--block", "u-font--xs", "u-letter-spacing--1");
-authorLink.classList.add("o-byline", "u-text-transform--upper", "u-display--inline-block", "u-font--xs", "u-letter-spacing--1");
-
-//add attributes
-let authorUrl = "https://velo.outsideonline.com/byline/" + authorSlug;
-authorLink.setAttribute("rel", "author");
-authorLink.setAttribute("href",  authorUrl );
-
-//wrap it in a <strong> -- bet this was Lance feature request…
-dateStrong = document.createElement('strong');
-authorStrong = document.createElement('strong');
-dateStrong.innerHTML = formatedDate;
-authorStrong.innerHTML = yoastData.found.authorName;
-
-//assemble
-timeStamp.prepend(dateStrong);
-authorLink.prepend(authorStrong);
-containerDiv.prepend(authorLink);
-containerDiv.prepend(timeStamp);
-
-//insert
-//look for the normal meta div by class
-if ($('.c-article-meta')) {
-    $('.c-article-meta').prepend(containerDiv);
-} else {
-    yoastData.warn.push("No metadata container detected");
-    //push raw data into error messages
-    for (found in yoastData.found) {
-        yoastData.warn.push(found + ":" + yoastData.found[found]);
+    //if no/invalid pubDate
+    if (!Date.parse(tryDate)) {
+        yoastData.warn.push("Invalid pubDate, failing back to modDate");
+        tryDate = yoastData.found.modDate
+        isModDate = ' (last modified)';
+        //what if no/invalid modDate tho?
     }
-}
 
-//report errors
-if (yoastData.warn && errorReporting) {
-    yoastData.warn.reverse();
-    for (warn of yoastData.warn) {
-        let div = document.createElement('div');
-        div.innerText = warn;
-        document.body.prepend(div);
+    formatedDate = new Date(Date.parse(tryDate)).toLocaleDateString('en-us', veloDate) + isModDate;
+
+    //slugify author name
+    authorSlug = slugify(yoastData.found.authorName);
+    //mapping bad slugs to good if known
+    const veloNames = {ahood: "andrew-hood"}
+    if (veloNames[authorSlug]) {
+        authorSlug = veloNames[authorSlug];
+    }
+
+    //create elements
+    let containerDiv = document.createElement('div');
+    let timeStamp =  document.createElement('time');
+    let authorLink =  document.createElement('a');
+
+    //add classes 
+    containerDiv.classList.add("o-post-meta", "u-spacing--quarter");
+    timeStamp.classList.add("o-timestamp", "u-text-transform--upper", "u-color--gray--dark", "u-display--block", "u-font--xs", "u-letter-spacing--1");
+    authorLink.classList.add("o-byline", "u-text-transform--upper", "u-display--inline-block", "u-font--xs", "u-letter-spacing--1");
+
+    //add attributes
+    let authorUrl = "https://velo.outsideonline.com/byline/" + authorSlug;
+    authorLink.setAttribute("rel", "author");
+    authorLink.setAttribute("href",  authorUrl );
+
+    //wrap it in a <strong> -- bet this was Lance feature request…
+    dateStrong = document.createElement('strong');
+    authorStrong = document.createElement('strong');
+    dateStrong.innerHTML = formatedDate;
+    authorStrong.innerHTML = yoastData.found.authorName;
+
+    //assemble
+    timeStamp.prepend(dateStrong);
+    authorLink.prepend(authorStrong);
+    containerDiv.prepend(authorLink);
+    containerDiv.prepend(timeStamp);
+
+    //insert
+    //look for the normal meta div by class
+    if ($('.c-article-meta')) {
+        $('.c-article-meta').prepend(containerDiv);
+    } else {
+        yoastData.warn.push("No metadata container detected");
+        //push raw data into error messages
+        for (found in yoastData.found) {
+            yoastData.warn.push(found + ":" + yoastData.found[found]);
+        }
+    }
+
+    //report errors
+    if (yoastData.warn && errorReporting) {
+        yoastData.warn.reverse();
+        for (warn of yoastData.warn) {
+            let div = document.createElement('div');
+            div.innerText = warn;
+            document.body.prepend(div);
+        }
     }
 }
