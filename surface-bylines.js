@@ -83,6 +83,12 @@ formatedDate = new Date(Date.parse(yoastData.found.pubDate)).toLocaleDateString(
 
 //slugify author name
 authorSlug = slugify(yoastData.found.authorName);
+//mapping bad slugs to good if known
+const veloNames = {ahood: "andrew-hood"}
+if (veloNames[authorSlug]) {
+    authorSlug = veloNames[authorSlug];
+}
+
 
 //create elements
 let containerDiv = document.createElement('div');
