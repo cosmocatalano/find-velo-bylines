@@ -61,17 +61,19 @@ function getYoastData(yoastClassObj) {
                 //assumes name is child of author 
                 yoastData.found.authorName =  fallbackObj[0].author.name;
             }
-        //if Article detected and everyhing worked normally
+
+        //if Article detected and everything worked normally
         } else {
             yoastData.found.pubDate = articleObj[0].datePublished;
             yoastData.found.modDate = articleObj[0].dateModified;
             yoastData.found.authorName = articleObj[0].author.name;
         }
     }
-
     return yoastData;
-
 }
+
+//error flag
+let errorReporting = true;
 
 let yoastData = getYoastData($('.yoast-schema-graph'));
 
@@ -122,7 +124,7 @@ if ($('.c-article-meta')) {
 }
 
 //report errors
-if (yoastData.warn) {
+if (yoastData.warn && errorReporting) {
     yoastData.warn.reverse();
     for (warn of yoastData.warn) {
         let div = document.createElement('div');
