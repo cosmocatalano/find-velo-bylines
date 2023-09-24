@@ -14,6 +14,7 @@ function getYoastData(yoastClassObj) {
     let yoastData = [];
     let fallbackObj = [];
     yoastData.warn = [];
+    yoastData.found = [];
     //check for yoastData
     if (!yoastClassObj) {
         yoastData.fatal = "Yoast Schema Graph not found";
@@ -33,10 +34,10 @@ function getYoastData(yoastClassObj) {
 
             // if no datePublished
             if (!fallbackObj.length) {
-                yoastData.rawDate = "";
+                yoastData.found.pubDate = "";
                 yoastData.warn.push("No published date detected");
             } else {
-                yoastData.rawDate = fallbackObj[0].datePublished;
+                yoastData.found.pubDate = fallbackObj[0].datePublished;
             }
 
             //looking for any modified date
@@ -44,27 +45,27 @@ function getYoastData(yoastClassObj) {
             
            // if no dateModified
             if (!fallbackObj.length) {
-                yoastData.modDate = "";
+                yoastData.found.modDate = "";
                 yoastData.warn.push("No modified date detected");
             } else {
-                yoastData.modDate = fallbackObj[0].dateModified;
+                yoastData.found.modDate = fallbackObj[0].dateModified;
             }
 
             //looking for any author string
             fallbackObj = yoastObj["@graph"].filter(child => child.hasOwnProperty("author"));
 
             if (!fallbackObj.length) {
-                yoastData.authorName = "";
+                yoastData.found.authorName = "";
                 yoastData.warn.push("No author name detected");
             } else {
                 //assumes name is child of author 
-                yoastData.authorName =  fallbackObj[0].author.name;
+                yoastData.found.authorName =  fallbackObj[0].author.name;
             }
         //if Article detected and everyhing worked normally
         } else {
-            yoastData.rawDate = articleObj[0].datePublished;
-            yoastData.modDate = articleObj[0].dateModified;
-            yoastData.authorName = articleObj[0].author.name;
+            yoastData.found.pubDate = articleObj[0].datePublished;
+            yoastData.found.modDate = articleObj[0].dateModified;
+            yoastData.found.authorName = articleObj[0].author.name;
         }
     }
 
@@ -76,10 +77,10 @@ let yoastData = getYoastData($('.yoast-schema-graph'));
 
 //parse date format
 const veloDate = { year: 'numeric', month: 'long', day: 'numeric' }
-formatedDate = new Date(Date.parse(yoastData.rawDate)).toLocaleDateString('en-us', veloDate);
+formatedDate = new Date(Date.parse(yoastData.found.pubDate)).toLocaleDateString('en-us', veloDate);
 
 //slugify author name
-authorSlug = slugify(yoastData.authorName);
+authorSlug = slugify(yoastData.found.authorName);
 
 //create elements
 let containerDiv = document.createElement('div');
@@ -100,7 +101,7 @@ authorLink.setAttribute("href",  authorUrl );
 dateStrong = document.createElement('strong');
 authorStrong = document.createElement('strong');
 dateStrong.innerHTML = formatedDate;
-authorStrong.innerHTML = yoastData.authorName;
+authorStrong.innerHTML = yoastData.found.authorName;
 
 //assemble
 timeStamp.prepend(dateStrong);
@@ -110,5 +111,22 @@ containerDiv.prepend(timeStamp);
 
 //insert
 //look for the normal meta div by class
-$('.c-article-meta').prepend(containerDiv);
+if ($('.c-article-meta')) {
+    $('.c-article-meta').prepend(containerDiv);
+} else {
+    yoastData.warn.push("No metadata container detected");
+    //push raw data into error messages
+    for (found in yoastData.found) {
+        yoastData.warn.push(found + ":" + yoastData.found[found]);
+    }
+}
 
+//report errors
+if (yoastData.warn) {
+    yoastData.warn.reverse();
+    for (warn of yoastData.warn) {
+        let div = document.createElement('div');
+        div.innerText = warn;
+        document.body.prepend(div);
+    }
+}
