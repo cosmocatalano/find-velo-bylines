@@ -1,3 +1,11 @@
+// ==Bookmarklet==
+// @name Velo Bylines
+// @author Cosmo Catalano
+// @script https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
+// ==/Bookmarklet==
+
+$ = jQuery.noConflict(true);
+
 //quick slugify function via https://jasonwatmore.com/vanilla-js-slugify-a-string-in-javascript
 function slugify(input) {
     if (!input)
@@ -20,7 +28,7 @@ function getYoastData(yoastClassObj) {
         yoastData.fatal = "Yoast Schema Graph not found";
     } else {
         //parse contents into object
-        let yoastObj = JSON.parse(yoastClassObj.innerHTML);
+        let yoastObj = JSON.parse(yoastClassObj.text());
 
         //looking for article values
         let articleObj = yoastObj["@graph"].filter(child => child["@type"] === "Article");
@@ -74,7 +82,7 @@ function getYoastData(yoastClassObj) {
 
 let surfaceDateAndByline = true;
 //we trust the existance of *either* any stamp or byline as a correctly attributed/dated article (for now)
-if ($('header time') || $('header [rel="author"]')) {
+if ($('header time').length || $('header [rel="author"]').length) {
     surfaceDateAndByline = false;
     
 } 
