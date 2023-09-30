@@ -125,6 +125,29 @@ if (surfaceDateAndByline) {
     let containerDiv = document.createElement('div');
     let timeStamp =  document.createElement('time');
     let authorLink =  document.createElement('a');
+    
+    //style
+    document.head.insertAdjacentHTML("beforeend", `<style>
+    @keyframes error {
+        0%   { background: rgba(255, 0, 0, 0.8); }
+        100% { background: rgba(255, 0, 0, 0.2); }
+    }
+    @keyframes byline {
+        0%   { background: rgba(0, 255, 0, 0.8); }
+        100% { background: transparent; }
+    }
+    .error {
+        background: rgba(255, 0, 0, 0.2);
+        animation: error 3s ease-in;
+        text-align: center;
+        font-weight: bold;
+    }
+    .byline {
+      background: transparent;
+      animation: byline 3s ease-in;
+    }
+    </style>`);
+
 
     //add classes 
     containerDiv.classList.add("o-post-meta", "u-spacing--quarter");
@@ -147,10 +170,11 @@ if (surfaceDateAndByline) {
     authorLink.prepend(authorStrong);
     containerDiv.prepend(authorLink);
     containerDiv.prepend(timeStamp);
+    containerDiv.classList.add("byline");
 
     //insert
     //look for the normal meta div by class
-    if ($('.c-article-meta')) {
+    if ($('.c-article-meta').length) {
         $('.c-article-meta').prepend(containerDiv);
     } else {
         yoastData.warn.push("No metadata container detected");
@@ -164,9 +188,10 @@ if (surfaceDateAndByline) {
     if (yoastData.warn && errorReporting) {
         yoastData.warn.reverse();
         for (warn of yoastData.warn) {
-            let div = document.createElement('div');
-            div.innerText = warn;
-            document.body.prepend(div);
+            let warnDiv = document.createElement('div');
+            warnDiv.innerText = warn;
+            warnDiv.classList.add("error")
+            document.body.prepend(warnDiv);
         }
     }
 }

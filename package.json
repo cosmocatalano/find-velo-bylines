@@ -1,8 +1,8 @@
 {
-  "dependencies": {
-    "bookmarklet": "^3.0.0"
-  },
   "scripts": {
     "build": "bookmarklet -d velo-bylines.js velo-bylines.html"
+  },
+  "devDependencies": {
+    "bookmarklet": "^3.0.0"
   }
 }
